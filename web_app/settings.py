@@ -117,11 +117,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'kontent_download/static/kontent_download',  # static fayllar papkasi
-]
-
+# collectstatic natijasini joylash
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# App ichidagi static/ papkalarni avtomatik topadi
+STATICFILES_FINDERS = [
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
