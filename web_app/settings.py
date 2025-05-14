@@ -117,7 +117,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'valyuta_converter/static',  # static fayllar papkasi
+    BASE_DIR / 'kontent_download/static',  # static fayllar papkasi
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
