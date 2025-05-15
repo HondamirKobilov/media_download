@@ -84,7 +84,6 @@ sendBtn.addEventListener("click", () => {
   }
 });
 
-
 function isValidURL(str) {
   try {
     new URL(str);
@@ -1037,14 +1036,10 @@ function appendVideoMessage(url) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-
-
 document.addEventListener("DOMContentLoaded", () => {
   const textarea = document.getElementById("messageInput");
   const wrapper = document.querySelector(".chat-wrapper");
-
   if (!textarea || !wrapper) return;
-
   textarea.addEventListener("focus", () => {
     // Faqat telefon uchun: width <= 480px
     if (window.innerWidth <= 480) {

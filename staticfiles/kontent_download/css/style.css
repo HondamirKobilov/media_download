@@ -1,42 +1,27 @@
 body
 {
-      background-color: #e4e6e8;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
+  background-color: #e4e6e8;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
 }
-body, html {
+html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+  background: #e4e6e8;
+  display: flex;
+  justify-content: center;
 }
 .content-section {
-  scroll-margin-top: 100px; /* navbar balandligiga qarab sozlang */
+  scroll-margin-top: 100px;
 }
-
-
-.chat-wrapper {
-      width: 100%;
-      max-width: 720px; /* yoki 640px */
-      height: 720px;
-      border-radius: 15px;
-      background-color: #f4fafd;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
-    }
-
-    .chat-body {
-      flex-grow: 1;
-      overflow-y: auto;
-    }
-    .identify-card img {
-      width: 60px;
-    }
 #voice-record-ui {
   transition: all 0.2s ease;
 }
 /* Tugma ichidagi animatsiya uchun */
+
 .pulse-button {
   position: relative;
   width: 45px;
@@ -128,7 +113,7 @@ body, html {
   background-color: #1e88e5;
   border-radius: 20px;
   padding: 10px 15px;
-  color: white;
+  color: #1d81ec;
   max-width: 350px;
   display: flex;
   align-items: center;
@@ -220,10 +205,16 @@ body, html {
   border-radius: 12px;
   word-wrap: break-word;
 }
+.message-meta{
+  color: #dddddd !important;
+}
+.chat-bubble.bot .message-meta {
+  color: #1e1d1d !important;
+}
 
 .chat-bubble.user {
-  background-color: #1976d2;
-  color: white;
+  background-color: #1976d2 !important;
+  color: white !important;
   align-self: flex-end;
 }
 
@@ -353,27 +344,6 @@ body, html {
     display: inline-block;
     animation: grow-note 0.4s ease-in-out;
   }
-#chat-wrapper {
-  min-height: 70vh;
-}
-
-@media (max-width: 992px) {
-  #chat-wrapper {
-    min-height: 60vh;
-  }
-}
-
-@media (max-width: 768px) {
-  #chat-wrapper {
-    min-height: 50vh;
-  }
-}
-
-@media (max-width: 576px) {
-  #chat-wrapper {
-    min-height: 40vh;
-  }
-}
 .navbar-nav .nav-link {
   text-decoration: none;
   position: relative;
@@ -443,36 +413,6 @@ body, html {
 .lang-menu .dropdown-item:hover {
   background-color: #f0f0f0;
 }
-.chat-wrapper {
-  transition: height 0.3s ease;
-}
-
-/* Faqat telefon (eng <= 480px) */
-@media (max-width: 480px) {
-  .chat-wrapper {
-    height: 30vh;
-  }
-
-  .chat-wrapper.expanded {
-    height: 80vh;
-  }
-}
-/* Umumiy holat (planshet, kompyuter) */
-.chat-wrapper {
-  height: 60vh;
-  transition: height 0.3s ease;
-}
-
-/* 📱 Faqat telefon uchun maxsus (kichikroq balandlik) */
-@media (max-width: 480px) {
-  .chat-wrapper {
-    height: 20vh; /* Telefon uchun juda kichik bo‘y */
-  }
-
-  .chat-wrapper.expanded {
-    height: 70vh;
-  }
-}
 
 .col {
   transition: box-shadow 0.6s ease;
@@ -487,16 +427,6 @@ body, html {
     box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.15);
     transition: box-shadow 0.3s ease;
   }
-
-.chat-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 85vh;
-  max-height: 95vh;
-  overflow: hidden;
-  border-radius: 12px;
-}
-
 /* Chat body */
 #chat-messages {
   flex: 1;
@@ -570,26 +500,7 @@ body, html {
   font-size: 16px;
   padding: 8px 0;
 }
-
 /* Mobil uchun yaxshilanish */
-@media (max-width: 480px) {
-  .chat-wrapper {
-    border-radius: 0;
-    height: 94vh;
-  }
-  #chat-messages {
-    padding: 0.8rem;
-    gap: 10px;
-  }
-  .chat-bubble {
-    font-size: 14px;
-    padding: 10px 12px;
-  }
-  .music-btn {
-    font-size: 14px;
-    padding: 8px 0;
-  }
-}
 input[type=range]::-webkit-slider-thumb {
   appearance: none;
   width: 10px;
@@ -609,3 +520,5 @@ input[type=range]::-moz-range-thumb {
   cursor: pointer;
   border: none;
 }
+
+/*Assalomu alaykum*/
