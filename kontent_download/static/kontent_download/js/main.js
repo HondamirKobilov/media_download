@@ -11,17 +11,24 @@ const voiceUI = document.getElementById("voice-record-ui");
 const timeSpan = document.getElementById("recordingTime");
 const sendVoiceBtn = document.getElementById("sendVoiceBtn");
 const chatMessages = document.getElementById("chat-messages");
+document.addEventListener("DOMContentLoaded", () => {
+  const user = Telegram.WebApp.initDataUnsafe.user;
 
-window.addEventListener("message", function(event) {
-  if (event.origin !== "https://oauth.telegram.org") {
-    return;
+  if (user) {
+    const navbarNav = document.getElementById("navbarNav");
+    if (navbarNav) {
+      navbarNav.innerHTML += `
+        <div class="ms-auto text-white d-flex flex-column align-items-end">
+          <span><strong>${user.first_name}</strong></span>
+          <small class="text-white-50">@${user.username || 'username yo‘q'}</small>
+        </div>
+      `;
+    }
+  } else {
+    console.log("❗ Telegram foydalanuvchi ma’lumoti topilmadi");
   }
-  const data = event.data;
-  if (data.id) {
-    window.chat_id = data.id;
-    console.log("Telegram chat_id olindi:", window.chat_id);
-  }
-}, false);
+});
+
 
 sendVoiceBtn.addEventListener("click", () => {
   if (hasStartedRecording && mediaRecorder && mediaRecorder.state === "recording") {
@@ -165,92 +172,144 @@ async function findMusicFromText(query) {
 }
 
 
-function renderMusicList(musicList) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "chat-bubble bot";
-  wrapper.style.whiteSpace = "pre-line";
-
-  let currentPage = 0;
-  const pageSize = 10;
-  const totalPages = Math.ceil(musicList.length / pageSize);
-
-  const textDiv = document.createElement("div");
-  wrapper.appendChild(textDiv);
-
-  const btnGrid = document.createElement("div");
-  btnGrid.style.display = "grid";
-  btnGrid.style.gridTemplateColumns = "repeat(5, 1fr)";
-  btnGrid.style.gap = "6px";
-  btnGrid.style.marginTop = "10px";
-
-  // 🔁 Sahifalash tugmalari (⏮ ❌ ⏭)
-  const navGrid = document.createElement("div");
-  navGrid.style.display = "grid";
-  navGrid.style.gridTemplateColumns = "1fr 1fr 1fr";
-  navGrid.style.gap = "8px";
-  navGrid.style.marginTop = "12px";
-
-  const prevBtn = document.createElement("button");
-  prevBtn.className = "btn btn-outline-secondary";
-  prevBtn.textContent = "⏮";
-  prevBtn.onclick = () => {
-    if (currentPage > 0) {
-      currentPage--;
-      renderPage();
+document.addEventListener("DOMContentLoaded", () => {
+  // CSRF token olish funksiyasi
+  function getCSRFToken() {
+    const name = "csrftoken";
+    const cookies = document.cookie.split("; ");
+    for (const cookie of cookies) {
+      const [key, value] = cookie.split("=");
+      if (key === name) return value;
     }
-  };
-
-  const closeBtn = document.createElement("button");
-  closeBtn.className = "btn btn-outline-danger";
-  closeBtn.textContent = "❌";
-  closeBtn.onclick = () => wrapper.remove();
-
-  const nextBtn = document.createElement("button");
-  nextBtn.className = "btn btn-outline-secondary";
-  nextBtn.textContent = "⏭";
-  nextBtn.onclick = () => {
-    if ((currentPage + 1) < totalPages) {
-      currentPage++;
-      renderPage();
-    }
-  };
-  navGrid.appendChild(prevBtn);
-  navGrid.appendChild(closeBtn);
-  navGrid.appendChild(nextBtn);
-  wrapper.appendChild(btnGrid);
-  wrapper.appendChild(navGrid);
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  function renderPage() {
-    const start = currentPage * pageSize;
-    const end = start + pageSize;
-    const pageItems = musicList.slice(start, end);
-
-    const listText = pageItems.map((item, index) => {
-      const minutes = Math.floor(item.duration / 60);
-      const seconds = item.duration % 60;
-      const time = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-      const realIndex = start + index + 1;
-      return `${realIndex}. ${item.title} ${time}`;
-    }).join('\n');
-
-    textDiv.textContent = listText;
-
-    btnGrid.innerHTML = "";
-    pageItems.forEach((item, index) => {
-      const btn = document.createElement("button");
-      btn.className = "btn btn-info music-btn";
-      // btn.textContent = start + index + 1 + "🎵";
-      btn.innerHTML = `${start + index + 1} <span class="note-icon">🎵</span>`;
-      btn.onclick = () => {
-        appendBotMusic(item.url, item.title, item.performer, item.duration);
-      };
-      btnGrid.appendChild(btn);
-    });
+    return "";
   }
-  renderPage();
-}
+
+  // Asosiy render qilish funksiyasi
+  window.renderMusicList = function(musicList) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "chat-bubble bot";
+    wrapper.style.whiteSpace = "pre-line";
+
+    let currentPage = 0;
+    const pageSize = 10;
+    const totalPages = Math.ceil(musicList.length / pageSize);
+
+    const textDiv = document.createElement("div");
+    wrapper.appendChild(textDiv);
+
+    const btnGrid = document.createElement("div");
+    btnGrid.style.display = "grid";
+    btnGrid.style.gridTemplateColumns = "repeat(5, 1fr)";
+    btnGrid.style.gap = "6px";
+    btnGrid.style.marginTop = "10px";
+
+    const navGrid = document.createElement("div");
+    navGrid.style.display = "grid";
+    navGrid.style.gridTemplateColumns = "1fr 1fr 1fr";
+    navGrid.style.gap = "8px";
+    navGrid.style.marginTop = "12px";
+
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "btn btn-outline-secondary";
+    prevBtn.textContent = "⏮";
+    prevBtn.onclick = () => {
+      if (currentPage > 0) {
+        currentPage--;
+        renderPage();
+      }
+    };
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "btn btn-outline-danger";
+    closeBtn.textContent = "❌";
+    closeBtn.onclick = () => wrapper.remove();
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn btn-outline-secondary";
+    nextBtn.textContent = "⏭";
+    nextBtn.onclick = () => {
+      if ((currentPage + 1) < totalPages) {
+        currentPage++;
+        renderPage();
+      }
+    };
+
+    navGrid.appendChild(prevBtn);
+    navGrid.appendChild(closeBtn);
+    navGrid.appendChild(nextBtn);
+    wrapper.appendChild(btnGrid);
+    wrapper.appendChild(navGrid);
+
+    const chatMessages = document.getElementById("chat-messages");
+    chatMessages.appendChild(wrapper);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    function renderPage() {
+      const start = currentPage * pageSize;
+      const end = start + pageSize;
+      const pageItems = musicList.slice(start, end);
+
+      const listText = pageItems.map((item, index) => {
+        const minutes = Math.floor(item.duration / 60);
+        const seconds = item.duration % 60;
+        const time = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+        const realIndex = start + index + 1;
+        return `${realIndex}. ${item.title} ${time}`;
+      }).join('\n');
+
+      textDiv.textContent = listText;
+      btnGrid.innerHTML = "";
+
+      pageItems.forEach((item, index) => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-info music-btn";
+        btn.innerHTML = `${start + index + 1} <span class="note-icon">🎵</span>`;
+
+        btn.onclick = () => {
+          console.log("🎵 Tugma bosildi:", item.title);
+
+          appendBotMusic(item.url, item.title, item.performer, item.duration);
+          console.log("📥 appendBotMusic chaqirildi");
+
+          const payload = {
+            chat_id: 1405814595,
+            audio_url: item.url,
+            title: item.title,
+            performer: item.performer,
+            duration: item.duration
+          };
+
+          console.log("📤 Yuborilayotgan payload:", payload);
+
+          fetch("/kontent_download/send_music_to_telegram/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify(payload)
+          })
+          .then(res => {
+            console.log("📩 So‘rov status kodi:", res.status);
+            return res.json();
+          })
+          .then(data => {
+            console.log("✅ Django javobi:", data);
+          })
+          .catch(err => {
+            console.error("❌ Fetch xatolik:", err);
+          });
+        };
+
+        btnGrid.appendChild(btn);
+      });
+
+    }
+
+    renderPage();
+  };
+});
+
 
 function appendBotMusic(url, title = "Nomaʼlum", performer = "", duration = 0) {
   const wrapper = document.createElement("div");
@@ -777,7 +836,6 @@ function cancelRecording() {
   }
 }
 
-
 function appendMessage(text, sender = "user") {
   const div = document.createElement("div");
   div.className = `chat-bubble ${sender}`;
@@ -790,17 +848,16 @@ function appendMessage(text, sender = "user") {
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 function appendBotVideo(url) {
   const wrapper = document.createElement("div");
   wrapper.className = "chat-bubble bot";
-
   const video = document.createElement("video");
   video.src = url;
   video.controls = true;
   video.style.width = "100%";
   video.style.borderRadius = "8px";
   video.setAttribute("type", "video/mp4");
-
   const meta = document.createElement("div");
   meta.className = "meta";
   meta.innerHTML = `${new Date().toLocaleTimeString([], {
@@ -830,13 +887,9 @@ function appendBotVideo(url) {
   shareBtn.textContent = "📤 Ulashish";
   shareBtn.className = "btn btn-primary";
   shareBtn.onclick = () => {
-    if (window.Telegram && Telegram.WebApp) {
-      Telegram.WebApp.openTelegramLink("https://t.me/YouTubeDanYuklovchiBot?start=video");
-    } else {
-      alert("Telegram WebApp muhitida ishlamayapti.");
-    }
+    const link = `https://t.me/Shazam_mbot?start=${encodeURIComponent(url)}`;
+    Telegram.WebApp.openTelegramLink(link);
   };
-
   buttonGroup.appendChild(downloadBtn);
   buttonGroup.appendChild(shareBtn);
 
@@ -846,25 +899,6 @@ function appendBotVideo(url) {
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-
-// function appendBotImage(url) {
-//   const wrapper = document.createElement("div");
-//   wrapper.className = "chat-bubble bot";
-//   const img = document.createElement("img");
-//   img.src = url;
-//   img.alt = "image";
-//   img.style.width = "100%";
-//   img.style.borderRadius = "8px";
-//   const meta = document.createElement("div");
-//   meta.className = "meta";
-//   meta.innerHTML = `${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} <span style="margin-left:4px;">✓✓</span>`;
-//   wrapper.appendChild(img);
-//   wrapper.appendChild(meta);
-//   chatMessages.appendChild(wrapper);
-//   chatMessages.scrollTop = chatMessages.scrollHeight;
-// }
-
 
 function sendVoice() {
   if (recordedChunks.length === 0) return;

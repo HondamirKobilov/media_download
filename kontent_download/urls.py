@@ -1,7 +1,7 @@
 # urls.py fayli (kontent_download app)
 from django.urls import path
 from . import views
-from .views import find_music, shazam_search, download_music
+from .views import find_music, shazam_search, download_music, send_music_to_telegram
 
 app_name = "kontent_download"
 
@@ -12,4 +12,5 @@ urlpatterns = [
     path('api/find_music/', find_music, name='find_music'),
     path('api/shazam/', shazam_search, name='shazam_search'),
     path("download_music/", download_music, name="download_music"),
+    path("send_music_to_telegram/", send_music_to_telegram),
 ]

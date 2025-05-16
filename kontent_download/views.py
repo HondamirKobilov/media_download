@@ -1,7 +1,10 @@
 import asyncio
 import json
+import os
 import re
 import subprocess
+import uuid
+import yt_dlp
 import httpx
 from b2sdk.v0 import InMemoryAccountInfo, B2Api
 import requests
@@ -132,7 +135,7 @@ async def fetch_instagram_media(request):
     try:
         # Platformani aniqlash
         if "youtube.com" in url or "youtu.be" in url:
-            api_url = "https://fast.videoyukla.uz/youtube/media"
+            api_url = "https://fast.videoyukla.uz/youtube/media/"
             params = {"yt_url": url}
             is_downloadable = False  # YouTube yuklanmaydi
         elif "instagram.com" in url:
@@ -155,10 +158,12 @@ async def fetch_instagram_media(request):
 
         # So‘rov yuborish
         print("kkkkkkkkkkkkkkkk>>>", api_url)
-        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=100.0) as client:
             response = await client.get(api_url, params=params)
-
+            data = response.json()
+            print(data)
         # To‘liq ob'ektlar:
+        print("JSON", response.json())
         print("🔗 So‘rov URL:", response.url)
         print("📨 Status Code:", response.status_code)
         print("🧾 Headers:")
@@ -396,3 +401,63 @@ def download_music(request):
     except Exception as e:
         return HttpResponse(f"Xatolik: {str(e)}", status=500)
 
+BOT_TOKEN = "7602584815:AAELNp5Dib7HFLMEL1oRwPLdnzC5kuXdLnY"
+@csrf_exempt
+def send_music_to_telegram(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Faqat POST ruxsat etiladi"}, status=405)
+
+    print("📩 So‘rov keldi!")
+
+    try:
+        data = json.loads(request.body)
+        print("🟡 JSON ma'lumotlar:", data)
+
+        chat_id = data.get("chat_id")
+        video_url = data.get("audio_url")
+        title = data.get("title", "")
+        performer = data.get("performer", "")
+        duration = data.get("duration", 0)
+
+        print("🎵 Video URL:", video_url)
+
+        # Vaqtinchalik fayl yaratish
+        uid = uuid.uuid4().hex
+        mp3_path = f"/tmp/{uid}.mp3"
+
+        print("⬇️ Yuklab olinmoqda va MP3 ga aylantirilmoqda...")
+
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': f'/tmp/{uid}.%(ext)s',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'quiet': True
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
+
+        print("✅ MP3 fayl tayyor:", mp3_path)
+
+        # Telegramga yuborish
+        with open(mp3_path, "rb") as audio_file:
+            send_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendAudio"
+            payload = {
+                "chat_id": chat_id,
+                "title": title,
+                "performer": performer,
+                "duration": duration
+            }
+            response = requests.post(send_url, data=payload, files={"audio": audio_file})
+            print("📤 Telegram javobi:", response.status_code, response.text)
+
+        os.remove(mp3_path)
+        return JsonResponse(response.json())
+
+    except Exception as e:
+        print("❌ Xatolik:", str(e))
+        return JsonResponse({"error": str(e)}, status=500)

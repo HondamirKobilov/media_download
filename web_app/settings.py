@@ -11,12 +11,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '157.180.18.152', 'Exchanger.uz', 'Exchanger.uz', 'www.Exchanger.uz','localhost']
-# ALLOWED_HOSTS = [
-#     '127.0.0.1',
-#     'localhost',
-#     '9852-185-139-138-148.ngrok-free.app',
-# ]
+# ALLOWED_HOSTS = ['127.0.0.1', '157.180.18.152', 'Exchanger.uz', 'Exchanger.uz', 'www.Exchanger.uz','localhost']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'aaad-90-156-166-108.ngrok-free.app',
+]
 
 
 # Application definition
