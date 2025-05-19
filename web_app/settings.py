@@ -2,7 +2,6 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-di@%12kp)%zf*n_rofbgnf24(&j8xy+8nu2ab3p2&xs=22$5(c'
 FFMPEG_PATH = "C:/ffmpeg/bin/ffmpeg.exe"
-
 import os
 
 MEDIA_URL = '/media/'
@@ -18,7 +17,6 @@ ALLOWED_HOSTS = ['127.0.0.1', '157.180.18.152', 'Exchanger.uz', 'Exchanger.uz', 
 #     'aaad-90-156-166-108.ngrok-free.app',
 # ]
 #
-
 # Application definition
 
 INSTALLED_APPS = [

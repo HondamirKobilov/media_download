@@ -11,24 +11,6 @@ const voiceUI = document.getElementById("voice-record-ui");
 const timeSpan = document.getElementById("recordingTime");
 const sendVoiceBtn = document.getElementById("sendVoiceBtn");
 const chatMessages = document.getElementById("chat-messages");
-document.addEventListener("DOMContentLoaded", () => {
-  const user = Telegram.WebApp.initDataUnsafe.user;
-
-  if (user) {
-    const navbarNav = document.getElementById("navbarNav");
-    if (navbarNav) {
-      navbarNav.innerHTML += `
-        <div class="ms-auto text-white d-flex flex-column align-items-end">
-          <span><strong>${user.first_name}</strong></span>
-          <small class="text-white-50">@${user.username || 'username yo‘q'}</small>
-        </div>
-      `;
-    }
-  } else {
-    console.log("❗ Telegram foydalanuvchi ma’lumoti topilmadi");
-  }
-});
-
 
 sendVoiceBtn.addEventListener("click", () => {
   if (hasStartedRecording && mediaRecorder && mediaRecorder.state === "recording") {
@@ -172,144 +154,92 @@ async function findMusicFromText(query) {
 }
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  // CSRF token olish funksiyasi
-  function getCSRFToken() {
-    const name = "csrftoken";
-    const cookies = document.cookie.split("; ");
-    for (const cookie of cookies) {
-      const [key, value] = cookie.split("=");
-      if (key === name) return value;
+function renderMusicList(musicList) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "chat-bubble bot";
+  wrapper.style.whiteSpace = "pre-line";
+
+  let currentPage = 0;
+  const pageSize = 10;
+  const totalPages = Math.ceil(musicList.length / pageSize);
+
+  const textDiv = document.createElement("div");
+  wrapper.appendChild(textDiv);
+
+  const btnGrid = document.createElement("div");
+  btnGrid.style.display = "grid";
+  btnGrid.style.gridTemplateColumns = "repeat(5, 1fr)";
+  btnGrid.style.gap = "6px";
+  btnGrid.style.marginTop = "10px";
+
+  // 🔁 Sahifalash tugmalari (⏮ ❌ ⏭)
+  const navGrid = document.createElement("div");
+  navGrid.style.display = "grid";
+  navGrid.style.gridTemplateColumns = "1fr 1fr 1fr";
+  navGrid.style.gap = "8px";
+  navGrid.style.marginTop = "12px";
+
+  const prevBtn = document.createElement("button");
+  prevBtn.className = "btn btn-outline-secondary";
+  prevBtn.textContent = "⏮";
+  prevBtn.onclick = () => {
+    if (currentPage > 0) {
+      currentPage--;
+      renderPage();
     }
-    return "";
-  }
-
-  // Asosiy render qilish funksiyasi
-  window.renderMusicList = function(musicList) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "chat-bubble bot";
-    wrapper.style.whiteSpace = "pre-line";
-
-    let currentPage = 0;
-    const pageSize = 10;
-    const totalPages = Math.ceil(musicList.length / pageSize);
-
-    const textDiv = document.createElement("div");
-    wrapper.appendChild(textDiv);
-
-    const btnGrid = document.createElement("div");
-    btnGrid.style.display = "grid";
-    btnGrid.style.gridTemplateColumns = "repeat(5, 1fr)";
-    btnGrid.style.gap = "6px";
-    btnGrid.style.marginTop = "10px";
-
-    const navGrid = document.createElement("div");
-    navGrid.style.display = "grid";
-    navGrid.style.gridTemplateColumns = "1fr 1fr 1fr";
-    navGrid.style.gap = "8px";
-    navGrid.style.marginTop = "12px";
-
-    const prevBtn = document.createElement("button");
-    prevBtn.className = "btn btn-outline-secondary";
-    prevBtn.textContent = "⏮";
-    prevBtn.onclick = () => {
-      if (currentPage > 0) {
-        currentPage--;
-        renderPage();
-      }
-    };
-
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "btn btn-outline-danger";
-    closeBtn.textContent = "❌";
-    closeBtn.onclick = () => wrapper.remove();
-
-    const nextBtn = document.createElement("button");
-    nextBtn.className = "btn btn-outline-secondary";
-    nextBtn.textContent = "⏭";
-    nextBtn.onclick = () => {
-      if ((currentPage + 1) < totalPages) {
-        currentPage++;
-        renderPage();
-      }
-    };
-
-    navGrid.appendChild(prevBtn);
-    navGrid.appendChild(closeBtn);
-    navGrid.appendChild(nextBtn);
-    wrapper.appendChild(btnGrid);
-    wrapper.appendChild(navGrid);
-
-    const chatMessages = document.getElementById("chat-messages");
-    chatMessages.appendChild(wrapper);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    function renderPage() {
-      const start = currentPage * pageSize;
-      const end = start + pageSize;
-      const pageItems = musicList.slice(start, end);
-
-      const listText = pageItems.map((item, index) => {
-        const minutes = Math.floor(item.duration / 60);
-        const seconds = item.duration % 60;
-        const time = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-        const realIndex = start + index + 1;
-        return `${realIndex}. ${item.title} ${time}`;
-      }).join('\n');
-
-      textDiv.textContent = listText;
-      btnGrid.innerHTML = "";
-
-      pageItems.forEach((item, index) => {
-        const btn = document.createElement("button");
-        btn.className = "btn btn-info music-btn";
-        btn.innerHTML = `${start + index + 1} <span class="note-icon">🎵</span>`;
-
-        btn.onclick = () => {
-          console.log("🎵 Tugma bosildi:", item.title);
-
-          appendBotMusic(item.url, item.title, item.performer, item.duration);
-          console.log("📥 appendBotMusic chaqirildi");
-
-          const payload = {
-            chat_id: 1405814595,
-            audio_url: item.url,
-            title: item.title,
-            performer: item.performer,
-            duration: item.duration
-          };
-
-          console.log("📤 Yuborilayotgan payload:", payload);
-
-          fetch("/kontent_download/send_music_to_telegram/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": getCSRFToken()
-            },
-            body: JSON.stringify(payload)
-          })
-          .then(res => {
-            console.log("📩 So‘rov status kodi:", res.status);
-            return res.json();
-          })
-          .then(data => {
-            console.log("✅ Django javobi:", data);
-          })
-          .catch(err => {
-            console.error("❌ Fetch xatolik:", err);
-          });
-        };
-
-        btnGrid.appendChild(btn);
-      });
-
-    }
-
-    renderPage();
   };
-});
 
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "btn btn-outline-danger";
+  closeBtn.textContent = "❌";
+  closeBtn.onclick = () => wrapper.remove();
+
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "btn btn-outline-secondary";
+  nextBtn.textContent = "⏭";
+  nextBtn.onclick = () => {
+    if ((currentPage + 1) < totalPages) {
+      currentPage++;
+      renderPage();
+    }
+  };
+  navGrid.appendChild(prevBtn);
+  navGrid.appendChild(closeBtn);
+  navGrid.appendChild(nextBtn);
+  wrapper.appendChild(btnGrid);
+  wrapper.appendChild(navGrid);
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  function renderPage() {
+    const start = currentPage * pageSize;
+    const end = start + pageSize;
+    const pageItems = musicList.slice(start, end);
+
+    const listText = pageItems.map((item, index) => {
+      const minutes = Math.floor(item.duration / 60);
+      const seconds = item.duration % 60;
+      const time = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+      const realIndex = start + index + 1;
+      return `${realIndex}. ${item.title} ${time}`;
+    }).join('\n');
+
+    textDiv.textContent = listText;
+
+    btnGrid.innerHTML = "";
+    pageItems.forEach((item, index) => {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-info music-btn";
+      // btn.textContent = start + index + 1 + "🎵";
+      btn.innerHTML = `${start + index + 1} <span class="note-icon">🎵</span>`;
+      btn.onclick = () => {
+        appendBotMusic(item.url, item.title, item.performer, item.duration);
+      };
+      btnGrid.appendChild(btn);
+    });
+  }
+  renderPage();
+}
 
 function appendBotMusic(url, title = "Nomaʼlum", performer = "", duration = 0) {
   const wrapper = document.createElement("div");
@@ -322,7 +252,7 @@ function appendBotMusic(url, title = "Nomaʼlum", performer = "", duration = 0) 
   wrapper.style.fontFamily = "sans-serif";
   wrapper.style.marginBottom = "12px";
   wrapper.style.position = "relative";
-
+  console.log("musiqaURL", url)
   const audio = new Audio(url);
   let isPlaying = false;
   let isSeeking = false;
@@ -576,6 +506,7 @@ function appendBotImage(url, medias = [], originalUrl = "") {
   wrapper.style.display = "flex";
   wrapper.style.flexDirection = "column";
   wrapper.style.width = "50%";
+
   const img = document.createElement("img");
   img.src = url;
   img.alt = "image";
@@ -585,12 +516,15 @@ function appendBotImage(url, medias = [], originalUrl = "") {
 
   const buttonGroup = document.createElement("div");
   buttonGroup.style.display = "flex";
-  buttonGroup.style.gap = "10px";
-  buttonGroup.style.marginTop = "8px";
+  buttonGroup.style.flexWrap = "wrap";
+  buttonGroup.style.justifyContent = "center";
+  buttonGroup.style.gap = "8px";
+  buttonGroup.style.marginTop = "10px";
 
   const downloadBtn = document.createElement("button");
   downloadBtn.textContent = "⬇️ Saqlash";
   downloadBtn.className = "btn btn-success";
+  downloadBtn.style.flex = "1 1 120px";
   downloadBtn.onclick = () => {
     const a = document.createElement("a");
     a.href = url;
@@ -601,6 +535,7 @@ function appendBotImage(url, medias = [], originalUrl = "") {
   const shareBtn = document.createElement("button");
   shareBtn.textContent = "📤 Ulashish";
   shareBtn.className = "btn btn-primary";
+  shareBtn.style.flex = "1 1 120px";
   shareBtn.onclick = () => {
     if (window.Telegram && Telegram.WebApp) {
       Telegram.WebApp.openTelegramLink("https://t.me/YouTubeDanYuklovchiBot?start=image");
@@ -609,90 +544,24 @@ function appendBotImage(url, medias = [], originalUrl = "") {
     }
   };
 
-  buttonGroup.style.display = "flex";
-  buttonGroup.style.flexWrap = "wrap";
-  buttonGroup.style.justifyContent = "center";
-  buttonGroup.style.gap = "8px";
-  buttonGroup.style.marginTop = "10px";
-
-
-  downloadBtn.textContent = "⬇️ Saqlash";
-  downloadBtn.className = "btn btn-success";
-  downloadBtn.style.flex = "1 1 120px";
-
-
-  shareBtn.textContent = "📤 Ulashish";
-  shareBtn.className = "btn btn-primary";
-  shareBtn.style.flex = "1 1 120px";
   buttonGroup.appendChild(downloadBtn);
   buttonGroup.appendChild(shareBtn);
   wrapper.appendChild(buttonGroup);
 
+  // Agar qo‘shimcha media bo‘lsa va video bo‘lsa
   if (medias.length > 0) {
-    const allowedQualities = [
-      // 144p
-      "144", "144p", "144p15", "144p30", "(144)", "(144p)", "144)", "(144p15)", "(144p30)",
-
-      // 240p
-      "240", "240p", "240p30", "(240)", "(240p)", "240)", "(240p30)",
-
-      // 360p
-      "360", "360p", "360p30", "360p60", "(360)", "(360p)", "360)", "(360p30)", "(360p60)",
-
-      // 480p
-      "480", "480p", "480p30", "(480)", "(480p)", "480)", "(480p30)",
-
-      // 720p
-      "720", "720p", "720p30", "720p60", "(720)", "(720p)", "720)", "(720p30)", "(720p60)",
-
-      // 1080p
-      "1080", "1080p", "1080p30", "1080p60", "1080p HDR", "(1080)", "(1080p)", "1080)", "(1080p30)", "(1080p60)", "(1080p HDR)",
-
-      // 1440p (2K)
-      "1440", "1440p", "1440p30", "1440p60", "(1440)", "(1440p)", "1440)", "(1440p30)", "(1440p60)",
-
-      // 2160p (4K)
-      "2160", "2160p", "2160p30", "2160p60", "2160p HDR", "(2160)", "(2160p)", "2160)", "(2160p30)", "(2160p60)", "(2160p HDR)",
-
-      // 4320p (8K)
-      "4320", "4320p", "4320p30", "4320p60", "(4320)", "(4320p)", "4320)", "(4320p30)", "(4320p60)"
-    ];
-
-    const seen = new Set();
-
     const filtered = medias.filter(m => {
       const ext = m.ext || m.url.split('.').pop().split('?')[0].toLowerCase();
-      const type = m.type;
-      const quality = m.quality || "";
-
-      if (type !== "video") {
-        console.log(`❌ SKIPPED: type != video =>`, m);
-        return false;
-      }
-
-      if (ext !== "mp4") {
-        console.log(`❌ SKIPPED: ext != mp4 (aniqlangan ext: ${ext}) =>`, m);
-        return false;
-      }
-
-      const matchedQuality = allowedQualities.find(q => quality.includes(q));
-      if (!matchedQuality) {
-        console.log(`❌ SKIPPED: noto'g'ri quality =>`, quality, m);
-        return false;
-      }
-
-      if (seen.has(matchedQuality)) {
-        console.log(`❌ SKIPPED: duplicate quality ${matchedQuality} =>`, m);
-        return false;
-      }
-
-      seen.add(matchedQuality);
-      m.normalizedQuality = matchedQuality;
-      console.log(`✅ PASSED: ${matchedQuality}p =>`, m);
-      return true;
+      const type = (m.type || "").toLowerCase();
+      return type !== "audio" && ext === "mp4";
     });
 
-    filtered.sort((a, b) => parseInt(a.normalizedQuality) - parseInt(b.normalizedQuality));
+    // Sifat qiymatiga qarab sortlash (agar mavjud bo‘lsa)
+    filtered.sort((a, b) => {
+      const qa = parseInt(a.quality?.match(/\d+/)?.[0] || "0");
+      const qb = parseInt(b.quality?.match(/\d+/)?.[0] || "0");
+      return qa - qb;
+    });
 
     const btnGroup = document.createElement("div");
     btnGroup.style.display = "grid";
@@ -703,7 +572,8 @@ function appendBotImage(url, medias = [], originalUrl = "") {
 
     filtered.forEach(media => {
       const btn = document.createElement("button");
-      btn.textContent = `${media.normalizedQuality}p`;
+      const quality = media.quality || "Video";
+      btn.textContent = quality;
       btn.className = "btn btn-primary";
       btn.style.width = "100%";
 
@@ -723,29 +593,29 @@ function appendBotImage(url, medias = [], originalUrl = "") {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            quality: `${media.normalizedQuality}p`,
+            quality: quality,
             videoData: mediaData,
             url: originalUrl
           })
         });
+
         if (!res.ok) {
           appendMessage(getLangText("video_failed"), "bot");
           return;
         }
 
         const contentType = res.headers.get("Content-Type") || "";
-
         if (contentType.includes("application/json")) {
           const data = await res.json();
           if (data.url) {
-            appendBotVideo(data.url);  // 360p holati
+            appendBotVideo(data.url);
           } else {
             appendMessage(getLangText("url_not_found"), "bot");
           }
         } else if (contentType.includes("video/mp4")) {
           const blob = await res.blob();
           const videoUrl = URL.createObjectURL(blob);
-          appendBotVideo(videoUrl);  // Birlashgan holat
+          appendBotVideo(videoUrl);
         } else {
           appendMessage(getLangText("unknown_response_format"), "bot");
         }
@@ -753,7 +623,6 @@ function appendBotImage(url, medias = [], originalUrl = "") {
 
       btnGroup.appendChild(btn);
     });
-
 
     wrapper.appendChild(btnGroup);
     const meta = document.createElement("div");
@@ -768,7 +637,6 @@ function appendBotImage(url, medias = [], originalUrl = "") {
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 
 async function startRecording() {
   try {
